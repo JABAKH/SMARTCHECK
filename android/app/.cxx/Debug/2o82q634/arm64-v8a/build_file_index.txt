@@ -1,0 +1,1 @@
+C:\Users\G16\Documents\UT\9\Aurelio\SMARTCHECK\SMARTCHECK\node_modules\react-native\ReactAndroid\cmake-utils\default-app-setup\CMakeLists.txt

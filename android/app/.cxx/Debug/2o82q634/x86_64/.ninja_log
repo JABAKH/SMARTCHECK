@@ -1,0 +1,6 @@
+# ninja log v5
+2	40	0	C:/Users/G16/Documents/UT/9/Aurelio/SMARTCHECK/SMARTCHECK/android/app/.cxx/Debug/2o82q634/x86_64/CMakeFiles/cmake.verify_globs	cf1fa7bc521fa15a
+7	3344	8117581094017764	CMakeFiles/appmodules.dir/59bd92ae56f290fd570b8f28d96badc9/SMARTCHECK/SMARTCHECK/android/app/build/generated/autolinking/src/main/jni/autolinking.cpp.o	fb3acc38d7ac86b
+1	3639	8117581097012149	CMakeFiles/appmodules.dir/OnLoad.cpp.o	c20abdcf0efe6a6b
+3640	3811	8117581098860656	C:/Users/G16/Documents/UT/9/Aurelio/SMARTCHECK/SMARTCHECK/android/app/build/intermediates/cxx/Debug/2o82q634/obj/x86_64/libappmodules.so	7eff3c0eb9275ebd
+3	25	0	C:/Users/G16/Documents/UT/9/Aurelio/SMARTCHECK/SMARTCHECK/android/app/.cxx/Debug/2o82q634/x86_64/CMakeFiles/cmake.verify_globs	cf1fa7bc521fa15a

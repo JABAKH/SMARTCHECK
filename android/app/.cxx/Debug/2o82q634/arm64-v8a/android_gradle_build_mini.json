@@ -1,0 +1,31 @@
+{
+  "buildFiles": [
+    "C:\\Users\\G16\\Documents\\UT\\9\\Aurelio\\SMARTCHECK\\SMARTCHECK\\node_modules\\react-native\\ReactAndroid\\cmake-utils\\default-app-setup\\CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "C:\\Users\\G16\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe",
+      "-C",
+      "C:\\Users\\G16\\Documents\\UT\\9\\Aurelio\\SMARTCHECK\\SMARTCHECK\\android\\app\\.cxx\\Debug\\2o82q634\\arm64-v8a",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "C:\\Users\\G16\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe",
+    "-C",
+    "C:\\Users\\G16\\Documents\\UT\\9\\Aurelio\\SMARTCHECK\\SMARTCHECK\\android\\app\\.cxx\\Debug\\2o82q634\\arm64-v8a",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "appmodules::@6890427a1f51a3e7e1df": {
+      "artifactName": "appmodules",
+      "abi": "arm64-v8a",
+      "output": "C:\\Users\\G16\\Documents\\UT\\9\\Aurelio\\SMARTCHECK\\SMARTCHECK\\android\\app\\build\\intermediates\\cxx\\Debug\\2o82q634\\obj\\arm64-v8a\\libappmodules.so",
+      "runtimeFiles": [
+        "C:\\Users\\G16\\.gradle\\caches\\8.10.2\\transforms\\ecaf85af74491e145fd7c1a1474ff70a\\transformed\\fbjni-0.6.0\\prefab\\modules\\fbjni\\libs\\android.arm64-v8a\\libfbjni.so",
+        "C:\\Users\\G16\\.gradle\\caches\\8.10.2\\transforms\\f55693cd78c81fc61ac8b821a5620e2b\\transformed\\react-android-0.76.7-debug\\prefab\\modules\\jsi\\libs\\android.arm64-v8a\\libjsi.so",
+        "C:\\Users\\G16\\.gradle\\caches\\8.10.2\\transforms\\f55693cd78c81fc61ac8b821a5620e2b\\transformed\\react-android-0.76.7-debug\\prefab\\modules\\reactnative\\libs\\android.arm64-v8a\\libreactnative.so"
+      ]
+    }
+  }
+}
