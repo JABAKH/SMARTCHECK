@@ -15,14 +15,15 @@ import {useAsistencias} from '../hooks/useAsistencias';
 import {getServerTimeOffset} from '../services/supabase';
 
 const COLORS = {
-  ink: '#06101c',
-  panel: '#0c1b2c',
-  panelSoft: '#10243a',
-  white: '#f8fafc',
-  muted: '#9fb0c5',
-  cyan: '#36d6c5',
-  blue: '#55a8ff',
-  green: '#4ade80',
+  ink: '#05080d',
+  panel: '#0b141c',
+  panelSoft: '#0e1b24',
+  white: '#edf5f7',
+  muted: '#91a2aa',
+  cyan: '#45dce7',
+  blue: '#1599c0',
+  amber: '#ffad32',
+  green: '#47d790',
 };
 const SAN_LUIS_TIME_ZONE = 'America/Hermosillo';
 
@@ -144,7 +145,10 @@ export default function TVScreen() {
       if (active) setClockOffset(offset);
     });
     const timer = setInterval(() => setTick(value => value + 1), 1000);
-    return () => clearInterval(timer);
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
   }, []);
 
   React.useEffect(() => {
@@ -160,8 +164,6 @@ export default function TVScreen() {
   return (
     <View style={styles.screen}>
       <StatusBar hidden />
-      <View style={styles.glowTop} />
-      <View style={styles.glowBottom} />
       <View style={[styles.content, !isWide && styles.contentNarrow]}>
         <View style={styles.header}>
           <View style={styles.brandBlock}>
@@ -196,17 +198,17 @@ export default function TVScreen() {
               </View>
             </View>
 
-            <Animated.View style={[styles.arrivalCard, {opacity: fade}]}>
+            <Animated.View style={[styles.arrivalCard, !isWide && styles.arrivalCardNarrow, {opacity: fade}]}>
               {latest ? (
                 <>
-                  <View style={styles.photoColumn}>
+                  <View style={[styles.photoColumn, !isWide && styles.photoColumnNarrow]}>
                     <Avatar asistencia={latest} large />
                     <View style={styles.photoStatus}>
                       <View style={styles.photoStatusDot} />
                       <Text style={styles.photoStatusText}>IDENTIDAD VALIDADA</Text>
                     </View>
                   </View>
-                  <View style={styles.personDetails}>
+                  <View style={[styles.personDetails, !isWide && styles.personDetailsNarrow]}>
                     <Text style={styles.welcomeLabel}>HOLA,</Text>
                     <Text style={styles.personName} numberOfLines={2} adjustsFontSizeToFit>
                       {getPersonName(latest)}
@@ -239,7 +241,7 @@ export default function TVScreen() {
               )}
             </Animated.View>
 
-            <View style={styles.bottomGrid}>
+            <View style={[styles.bottomGrid, !isWide && styles.bottomGridNarrow]}>
               <View style={styles.infoCard}>
                 <Text style={styles.infoCardLabel}>AVISOS</Text>
                 {loadingNotices ? (
@@ -320,14 +322,12 @@ export default function TVScreen() {
 
 const styles = StyleSheet.create({
   screen: {flex: 1, backgroundColor: COLORS.ink, overflow: 'hidden'},
-  glowTop: {position: 'absolute', width: 520, height: 520, borderRadius: 260, backgroundColor: '#0c5772', opacity: 0.18, top: -300, right: -120},
-  glowBottom: {position: 'absolute', width: 620, height: 620, borderRadius: 310, backgroundColor: '#123d6b', opacity: 0.18, bottom: -420, left: -180},
   content: {flex: 1, paddingHorizontal: 28, paddingTop: 16, paddingBottom: 10},
   contentNarrow: {paddingHorizontal: 24, paddingTop: 24},
   header: {height: 52, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'},
   brandBlock: {flexDirection: 'row', alignItems: 'center'},
-  logoMark: {width: 42, height: 42, borderRadius: 13, backgroundColor: COLORS.cyan, justifyContent: 'center', alignItems: 'center', marginRight: 11},
-  logoText: {color: COLORS.ink, fontSize: 23, fontWeight: '900'},
+  logoMark: {width: 42, height: 42, borderRadius: 7, backgroundColor: '#10232c', justifyContent: 'center', alignItems: 'center', marginRight: 11},
+  logoText: {color: COLORS.cyan, fontSize: 23, fontWeight: '900'},
   brand: {color: COLORS.white, fontSize: 21, fontWeight: '800', letterSpacing: 2.2},
   brandCaption: {color: COLORS.muted, fontSize: 8, fontWeight: '700', letterSpacing: 2.4, marginTop: 2},
   statusBlock: {alignItems: 'flex-end'},
@@ -340,23 +340,26 @@ const styles = StyleSheet.create({
   heroColumn: {flex: 1.72},
   heroColumnNarrow: {flex: 1},
   sideColumn: {flex: 0.78, gap: 10},
-  sideColumnNarrow: {flex: 1, flexDirection: 'row'},
+  sideColumnNarrow: {flex: 1, flexDirection: 'column'},
   sectionHeadingRow: {height: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start'},
-  eyebrow: {color: COLORS.cyan, fontSize: 8, fontWeight: '800', letterSpacing: 1.8, marginBottom: 4},
+  eyebrow: {color: COLORS.amber, fontSize: 8, fontWeight: '800', letterSpacing: 1.8, marginBottom: 4},
   sectionHeading: {color: COLORS.white, fontSize: 19, fontWeight: '700'},
-  confirmedPill: {borderWidth: 1, borderColor: 'rgba(74,222,128,0.45)', backgroundColor: 'rgba(74,222,128,0.09)', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6},
+  confirmedPill: {backgroundColor: 'rgba(71,215,144,0.10)', borderRadius: 5, paddingHorizontal: 10, paddingVertical: 6},
   confirmedPillText: {color: '#a7f3d0', fontSize: 7, fontWeight: '800', letterSpacing: 1},
-  arrivalCard: {flex: 1, minHeight: 250, flexDirection: 'row', alignItems: 'center', borderRadius: 20, backgroundColor: COLORS.panel, borderWidth: 1, borderColor: 'rgba(85,168,255,0.25)', padding: 16},
+  arrivalCard: {flex: 1, minHeight: 250, flexDirection: 'row', alignItems: 'center', borderRadius: 10, backgroundColor: COLORS.panel, borderWidth: 1, borderColor: '#1a2a32', padding: 16},
+  arrivalCardNarrow: {flexDirection: 'column', alignItems: 'stretch', minHeight: 0},
   photoColumn: {width: '38%', height: '100%', alignItems: 'center', justifyContent: 'center'},
-  avatar: {width: 40, height: 40, borderRadius: 13, backgroundColor: '#173653', borderWidth: 1, borderColor: 'rgba(54,214,197,0.5)', overflow: 'hidden', justifyContent: 'center', alignItems: 'center'},
-  avatarLarge: {width: '100%', height: '88%', maxHeight: 260, borderRadius: 18, borderWidth: 2},
+  photoColumnNarrow: {width: '100%', height: 200, marginBottom: 14},
+  avatar: {width: 40, height: 40, borderRadius: 8, backgroundColor: '#0d2730', overflow: 'hidden', justifyContent: 'center', alignItems: 'center'},
+  avatarLarge: {width: '100%', height: '88%', maxHeight: 260, borderRadius: 10},
   avatarImage: {width: '100%', height: '100%'},
   avatarInitials: {color: COLORS.white, fontSize: 17, fontWeight: '800'},
   avatarInitialsLarge: {fontSize: 72, color: COLORS.cyan},
-  photoStatus: {position: 'absolute', bottom: 3, flexDirection: 'row', alignItems: 'center', borderRadius: 999, backgroundColor: 'rgba(4,15,25,0.92)', paddingHorizontal: 9, paddingVertical: 6},
+  photoStatus: {position: 'absolute', bottom: 3, flexDirection: 'row', alignItems: 'center', borderRadius: 5, backgroundColor: 'rgba(4,15,25,0.96)', paddingHorizontal: 9, paddingVertical: 6},
   photoStatusDot: {width: 7, height: 7, borderRadius: 4, backgroundColor: COLORS.green, marginRight: 7},
   photoStatusText: {color: '#bbf7d0', fontSize: 7, fontWeight: '800', letterSpacing: 0.8},
   personDetails: {flex: 1, paddingLeft: 22, justifyContent: 'center'},
+  personDetailsNarrow: {paddingLeft: 0},
   welcomeLabel: {color: COLORS.cyan, fontSize: 10, fontWeight: '800', letterSpacing: 2.2, marginBottom: 5},
   personName: {color: COLORS.white, fontSize: 34, lineHeight: 38, fontWeight: '800', marginBottom: 7},
   personMessage: {color: COLORS.muted, fontSize: 11, lineHeight: 16, marginBottom: 14},
@@ -371,17 +374,18 @@ const styles = StyleSheet.create({
   emptyArrivalTitle: {color: COLORS.white, fontSize: 20, fontWeight: '700', marginTop: 12, textAlign: 'center'},
   emptyArrivalBody: {color: COLORS.muted, fontSize: 11, lineHeight: 16, maxWidth: 420, textAlign: 'center', marginTop: 7},
   bottomGrid: {height: 80, flexDirection: 'row', gap: 10, marginTop: 10},
-  infoCard: {flex: 1, borderRadius: 14, backgroundColor: 'rgba(16,36,58,0.82)', borderWidth: 1, borderColor: 'rgba(159,176,197,0.14)', paddingHorizontal: 13, paddingVertical: 9},
-  infoCardLabel: {color: COLORS.cyan, fontSize: 7, fontWeight: '800', letterSpacing: 1.3, marginBottom: 4},
+  bottomGridNarrow: {height: 'auto', flexDirection: 'column'},
+  infoCard: {flex: 1, minHeight: 80, borderRadius: 8, backgroundColor: 'rgba(11,20,28,.94)', borderWidth: 1, borderColor: '#1a2a32', paddingHorizontal: 13, paddingVertical: 9},
+  infoCardLabel: {color: COLORS.amber, fontSize: 7, fontWeight: '800', letterSpacing: 1.3, marginBottom: 4},
   infoCardTitle: {color: COLORS.white, fontSize: 12, fontWeight: '700', marginBottom: 3},
   infoCardBody: {color: COLORS.muted, fontSize: 9, lineHeight: 12},
-  clockCard: {height: 136, borderRadius: 18, backgroundColor: COLORS.panelSoft, borderWidth: 1, borderColor: 'rgba(54,214,197,0.22)', paddingHorizontal: 16, paddingVertical: 14},
-  clockLabel: {color: COLORS.cyan, fontSize: 10, fontWeight: '800', letterSpacing: 2.2},
+  clockCard: {height: 136, borderRadius: 10, backgroundColor: COLORS.panelSoft, borderWidth: 1, borderColor: '#1a2a32', paddingHorizontal: 16, paddingVertical: 14},
+  clockLabel: {color: COLORS.amber, fontSize: 10, fontWeight: '800', letterSpacing: 2.2},
   clockRow: {flexDirection: 'row', alignItems: 'flex-start', marginTop: 8},
   clock: {color: COLORS.white, fontSize: 42, lineHeight: 48, fontWeight: '800', letterSpacing: -2, flexShrink: 1},
   seconds: {color: COLORS.cyan, fontSize: 13, fontWeight: '700', marginTop: 6, marginLeft: 6},
   date: {color: COLORS.muted, fontSize: 10, lineHeight: 14, textTransform: 'capitalize'},
-  recentCard: {flex: 1, borderRadius: 18, backgroundColor: 'rgba(12,27,44,0.92)', borderWidth: 1, borderColor: 'rgba(159,176,197,0.13)', paddingHorizontal: 13, paddingVertical: 12},
+  recentCard: {flex: 1, borderRadius: 10, backgroundColor: 'rgba(11,20,28,.94)', borderWidth: 1, borderColor: '#1a2a32', paddingHorizontal: 13, paddingVertical: 12},
   recentHeader: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10},
   recentTitle: {color: COLORS.white, fontSize: 13, fontWeight: '800', letterSpacing: 1.4},
   recentCount: {color: COLORS.cyan, fontSize: 20, fontWeight: '800'},
@@ -390,7 +394,7 @@ const styles = StyleSheet.create({
   recentDetails: {flex: 1, marginHorizontal: 12},
   recentName: {color: COLORS.white, fontSize: 14, fontWeight: '700'},
   recentMethod: {color: COLORS.muted, fontSize: 10, marginTop: 3},
-  recentTime: {color: COLORS.cyan, fontSize: 15, fontWeight: '800'},
+  recentTime: {color: COLORS.amber, fontSize: 15, fontWeight: '800'},
   recentEmpty: {flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20},
   recentEmptyText: {color: COLORS.muted, fontSize: 13, lineHeight: 19, textAlign: 'center'},
   footer: {height: 22, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end'},

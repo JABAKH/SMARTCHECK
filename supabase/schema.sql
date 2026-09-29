@@ -370,6 +370,14 @@ CREATE POLICY "asistencias: usuario inserta la suya"
   ON public.asistencias FOR INSERT TO authenticated
   WITH CHECK (usuario_id = (SELECT auth.uid()) AND exitoso = TRUE);
 
+DROP POLICY IF EXISTS "asistencias: admin elimina" ON public.asistencias;
+CREATE POLICY "asistencias: admin elimina"
+  ON public.asistencias FOR DELETE TO authenticated
+  USING ((SELECT private.is_admin()));
+
+REVOKE ALL ON TABLE public.asistencias FROM anon;
+GRANT SELECT, INSERT, DELETE ON TABLE public.asistencias TO authenticated;
+
 CREATE OR REPLACE VIEW public.asistencias_tv
 WITH (security_barrier = TRUE)
 AS

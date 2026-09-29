@@ -45,7 +45,7 @@
 | Tablero de avisos dinámicos | ✅ Implementado |
 | Próximos eventos en pantalla | ✅ Implementado |
 | Asistencias recientes en tiempo real | ✅ Implementado |
-| Diseño responsivo para TV / monitor | ✅ Implementado |
+| Diseño responsivo y consistente para TV, móvil y panel admin | ✅ Implementado |
 | App móvil independiente para checador | ✅ Implementado |
 | Pantalla de verificación biométrica con huella | ✅ Implementado |
 | Orientación vertical en el celular | ✅ Implementado |
@@ -55,12 +55,18 @@
 | Uso de autenticación por sesión y roles | ✅ Implementado |
 | Panel de administración de avisos y eventos | ✅ Implementado |
 | Reproducción multimedia en pantalla | 🔲 Pendiente |
-| Validación nativa de biometría y captura facial automática en Android | ✅ Implementado (requiere probar con rostro/huella registrados) |
-| Panel administrativo web remoto | 🔲 Pendiente |
+| Validación nativa de biometría y captura facial automática en Android | ✅ Implementado y validado en dispositivo físico |
 
-### Estado verificado en código (2026-09-25)
+
+### Estado verificado en código y dispositivos (2026-09-28)
 
 Se revisó la implementación actual del proyecto y este conjunto de módulos ya está funcionando en la app:
+
+- La TV, el checador móvil y el panel de administración comparten una interfaz responsiva de consola HUD: fondo oscuro, telemetría cian, acciones ámbar y estados legibles en pantallas compactas o 16:9.
+- La TV presenta el último acceso y la lista del día en tiempo real, con la hora de San Luis Río Colorado (`America/Hermosillo`).
+- El usuario regular solo ve “Regístrate”: primero confirma la biometría y luego la cámara frontal captura automáticamente la foto cuando ML Kit detecta su rostro.
+- La foto se corrige antes de enviarse, se guarda con el acceso y aparece en la TV. Los accesos de rol `admin` quedan excluidos de esa pantalla.
+- El administrador entra a un panel separado con CRUD de avisos y eventos, selector nativo de fecha/hora y cierre de sesión. Los avisos y eventos se reflejan en la TV por Realtime.
 
 - `App.js` separa los flujos: si corre en TV, abre `TVScreen`; si corre en móvil, abre la app de checador.
 - `TVScreen` usa un dashboard 16:9 validado en un emulador Android TV 1920x1080 y destaca el último acceso con foto, nombre, hora, fecha y método.
@@ -137,7 +143,7 @@ Y agrega al `PATH`:
 
 ```powershell
 # 1. Clonar el repositorio
-git clone https://gitlab.com/ut-group1090839/smartcheck.git
+git clone https://github.com/JABAKH/SMARTCHECK.git
 cd smartcheck
 
 # 2. Instalar dependencias
@@ -272,10 +278,10 @@ smartcheck/
 ### ☁️ Backend / Nube
 - [x] Proyecto de Supabase creado y credenciales obtenidas ✅
 - [x] Esquema SQL creado (`supabase/schema.sql`) con tablas, índices, triggers y RLS ✅
-- [ ] Ejecutar `supabase/schema.sql` en el SQL Editor del proyecto Supabase
-- [ ] Aplicar `supabase/migrations/20260925072332_fix_attendance_tv_flow.sql` al proyecto activo (agrega foto/nombre para TV y corrige la recursión RLS detectada)
+- [x] Ejecutar `supabase/schema.sql` en el proyecto Supabase activo
+- [x] Aplicar las migraciones de asistencia/TV y filtro de administradores al proyecto activo
 - [x] Configurar autenticación de usuarios en Supabase Auth para login con email/contraseña y roles de perfil ✅
-- [ ] Verificar políticas RLS con usuarios de prueba (admin y usuario normal)
+- [x] Verificar políticas RLS con usuarios de prueba (admin y usuario normal)
 - [ ] Crear Edge Functions para registrar asistencias
 - [ ] Configurar notificaciones push para alertas a administradores
 
@@ -293,9 +299,9 @@ smartcheck/
 
 ### 🧪 Pruebas
 - [x] Escribir pruebas unitarias para los componentes principales (`App.js`) ✅ (smoke test de renderizado configurado con Jest)
-- [ ] Probar el flujo de autenticación biométrica en dispositivo físico
-- [ ] Probar la sincronización en tiempo real entre app móvil y pantalla TV
-- [ ] Pruebas de rendimiento en emulador Android TV (1080p)
+- [x] Probar el flujo de autenticación biométrica en dispositivo físico
+- [x] Probar la sincronización en tiempo real entre app móvil y pantalla TV
+- [x] Pruebas de rendimiento visual en emulador Android TV (1080p)
 
 ### 📦 Despliegue
 - [ ] Generar APK de release para la pantalla TV (`./gradlew assembleRelease`)
@@ -414,4 +420,4 @@ El esquema completo está en [`supabase/schema.sql`](./supabase/schema.sql). Eje
 
 Proyecto desarrollado para la materia de desarrollo móvil — Universidad de Tecnología.
 Grupo: `ut-group1090839`
-Repositorio: [gitlab.com/ut-group1090839/smartcheck](https://gitlab.com/ut-group1090839/smartcheck)
+Repositorio: [github.com/JABAKH/SMARTCHECK](https://github.com/JABAKH/SMARTCHECK)

@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -22,6 +23,32 @@ const formatDate = iso =>
     minute: '2-digit',
     hour12: false,
   }).format(new Date(iso));
+
+const formatDay = date =>
+  new Intl.DateTimeFormat('es-MX', {
+    timeZone: 'America/Hermosillo',
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(date);
+
+function getHermosilloDayWindow(date) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Hermosillo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date).reduce((values, part) => {
+    if (part.type !== 'literal') values[part.type] = part.value;
+    return values;
+  }, {});
+  const calendarDay = `${parts.year}-${parts.month}-${parts.day}`;
+  const start = new Date(`${calendarDay}T00:00:00-07:00`);
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 1);
+  return {start: start.toISOString(), end: end.toISOString()};
+}
 
 /**
  * AdminScreen — Panel de administración.
@@ -52,7 +79,7 @@ export default function AdminScreen() {
     return (
       <View style={styles.centered}>
         <Text style={styles.errorText}>
-          ⛔ Acceso restringido a administradores.
+          Acceso restringido a administradores.
         </Text>
       </View>
     );
@@ -65,7 +92,7 @@ export default function AdminScreen() {
    AdminPanel — Panel principal del administrador
 ───────────────────────────────────────────────────────────── */
 function AdminPanel({perfil}) {
-  const [tab, setTab] = useState('avisos'); // 'avisos' | 'eventos'
+  const [tab, setTab] = useState('avisos'); // 'avisos' | 'eventos' | 'accesos'
   const [cerrandoSesion, setCerrandoSesion] = useState(false);
 
   async function cerrarSesion() {
@@ -82,6 +109,7 @@ function AdminPanel({perfil}) {
 
   return (
     <View style={styles.screen}>
+      <StatusBar barStyle="light-content" backgroundColor="#05080d" />
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerRow}>
@@ -107,24 +135,29 @@ function AdminPanel({perfil}) {
           style={[styles.tab, tab === 'avisos' && styles.tabActive]}
           onPress={() => setTab('avisos')}>
           <Text style={[styles.tabText, tab === 'avisos' && styles.tabTextActive]}>
-            📢 Avisos
+            Avisos
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, tab === 'eventos' && styles.tabActive]}
           onPress={() => setTab('eventos')}>
           <Text style={[styles.tabText, tab === 'eventos' && styles.tabTextActive]}>
-            📅 Eventos
+            Eventos
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, tab === 'accesos' && styles.tabActive]}
+          onPress={() => setTab('accesos')}>
+          <Text style={[styles.tabText, tab === 'accesos' && styles.tabTextActive]}>
+            Accesos
           </Text>
         </TouchableOpacity>
       </View>
 
       {/* Contenido del tab activo */}
-      {tab === 'avisos' ? (
-        <AvisosTab perfilId={perfil?.id} />
-      ) : (
-        <EventosTab perfilId={perfil?.id} />
-      )}
+      {tab === 'avisos' ? <AvisosTab perfilId={perfil?.id} /> : null}
+      {tab === 'eventos' ? <EventosTab perfilId={perfil?.id} /> : null}
+      {tab === 'accesos' ? <AccesosTab /> : null}
     </View>
   );
 }
@@ -295,7 +328,7 @@ function AvisosTab({perfilId}) {
       </TouchableOpacity>
       {editandoId ? (
         <TouchableOpacity style={[styles.btn, styles.btnSecondary]} onPress={limpiarFormulario}>
-          <Text style={styles.btnText}>Cancelar edición</Text>
+          <Text style={[styles.btnText, styles.btnSecondaryText]}>Cancelar edición</Text>
         </TouchableOpacity>
       ) : null}
 
@@ -322,12 +355,12 @@ function AvisosTab({perfilId}) {
               <TouchableOpacity
                 onPress={() => toggleAviso(a)}
                 style={styles.actionBtn}>
-                <Text style={{fontSize: 18}}>{a.activo ? '🔴' : '🟢'}</Text>
+                <Text style={styles.actionText}>{a.activo ? 'Ocultar' : 'Activar'}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => eliminarAviso(a.id)}
                 style={styles.actionBtn}>
-                <Text style={{fontSize: 18}}>🗑️</Text>
+                <Text style={styles.actionText}>Eliminar</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -340,6 +373,127 @@ function AvisosTab({perfilId}) {
 /* ─────────────────────────────────────────────────────────────
    EventosTab — Crear y listar eventos
 ───────────────────────────────────────────────────────────── */
+function AccesosTab() {
+  const [fecha, setFecha] = useState(new Date());
+  const [mostrarCalendario, setMostrarCalendario] = useState(false);
+  const [cantidad, setCantidad] = useState(null);
+  const [cargando, setCargando] = useState(true);
+  const [eliminando, setEliminando] = useState(false);
+
+  const cargarCantidad = async (fechaSeleccionada = fecha) => {
+    if (!isSupabaseReady()) {
+      setCargando(false);
+      return;
+    }
+    try {
+      setCargando(true);
+      const {start, end} = getHermosilloDayWindow(fechaSeleccionada);
+      const {count, error} = await supabase
+        .from('asistencias')
+        .select('id', {count: 'exact', head: true})
+        .gte('timestamp_check', start)
+        .lt('timestamp_check', end);
+      if (error) throw error;
+      setCantidad(count ?? 0);
+    } catch (err) {
+      Alert.alert('No se pudieron cargar los accesos', err.message);
+      setCantidad(null);
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  useEffect(() => {
+    cargarCantidad();
+  }, [fecha]);
+
+  function seleccionarFecha(_event, fechaSeleccionada) {
+    setMostrarCalendario(false);
+    if (fechaSeleccionada) setFecha(fechaSeleccionada);
+  }
+
+  function confirmarEliminacion() {
+    if (cantidad === 0) {
+      Alert.alert('Sin registros', 'No hay accesos para eliminar en esta fecha.');
+      return;
+    }
+    Alert.alert(
+      'Eliminar accesos del día',
+      `Se eliminarán ${cantidad ?? 'todos los'} registro(s) de ${formatDay(fecha)}. Esta acción no se puede deshacer.`,
+      [
+        {text: 'Cancelar', style: 'cancel'},
+        {text: 'Eliminar registros', style: 'destructive', onPress: eliminarAccesos},
+      ],
+    );
+  }
+
+  async function eliminarAccesos() {
+    if (!isSupabaseReady()) {
+      Alert.alert('Servicio no disponible', 'Supabase no está disponible en este momento.');
+      return;
+    }
+    try {
+      setEliminando(true);
+      const {start, end} = getHermosilloDayWindow(fecha);
+      const {data, error} = await supabase
+        .from('asistencias')
+        .delete()
+        .gte('timestamp_check', start)
+        .lt('timestamp_check', end)
+        .select('id');
+      if (error) throw error;
+      const eliminados = data?.length ?? 0;
+      setCantidad(0);
+      Alert.alert('Accesos eliminados', `Se eliminaron ${eliminados} registro(s) de ${formatDay(fecha)}.`);
+    } catch (err) {
+      Alert.alert('No se pudieron eliminar los accesos', err.message);
+    } finally {
+      setEliminando(false);
+    }
+  }
+
+  return (
+    <ScrollView contentContainerStyle={styles.tabContent}>
+      <Text style={styles.formTitle}>Accesos de hoy</Text>
+      <Text style={styles.accessesIntro}>
+        Selecciona una fecha para consultar y depurar únicamente los registros de ese día. La hora se calcula para San Luis Río Colorado.
+      </Text>
+      <TouchableOpacity
+        accessibilityRole="button"
+        accessibilityLabel="Seleccionar día de accesos"
+        style={styles.datePickerButton}
+        onPress={() => setMostrarCalendario(true)}>
+        <View>
+          <Text style={styles.fieldLabel}>DÍA SELECCIONADO</Text>
+          <Text style={styles.datePickerText}>{formatDay(fecha)}</Text>
+        </View>
+        <Text style={styles.calendarIcon}>CAL</Text>
+      </TouchableOpacity>
+      {mostrarCalendario ? (
+        <DateTimePicker
+          value={fecha}
+          mode="date"
+          display="default"
+          onChange={seleccionarFecha}
+        />
+      ) : null}
+      <View style={styles.accessCountCard}>
+        <Text style={styles.accessCountLabel}>REGISTROS ENCONTRADOS</Text>
+        {cargando ? <ActivityIndicator color="#45dce7" /> : <Text style={styles.accessCount}>{cantidad ?? '--'}</Text>}
+      </View>
+      <TouchableOpacity
+        accessibilityRole="button"
+        accessibilityLabel="Eliminar todos los accesos del día seleccionado"
+        style={[styles.deleteDayButton, (eliminando || cargando) && styles.buttonDisabled]}
+        disabled={eliminando || cargando}
+        onPress={confirmarEliminacion}>
+        {eliminando ? <ActivityIndicator color="#ffe4e6" /> : <Text style={styles.deleteDayButtonText}>Eliminar accesos del día</Text>}
+      </TouchableOpacity>
+      <Text style={styles.deleteHint}>Esta operación solo está disponible para administradores y requiere confirmación.</Text>
+    </ScrollView>
+  );
+}
+
 function EventosTab({perfilId}) {
   const [eventos, setEventos] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -497,7 +651,7 @@ function EventosTab({perfilId}) {
             {fechaInicio ? formatDate(fechaInicio.toISOString()) : 'Seleccionar fecha y hora'}
           </Text>
         </View>
-        <Text style={styles.calendarIcon}>▣</Text>
+        <Text style={styles.calendarIcon}>FECHA</Text>
       </TouchableOpacity>
       {selectorFecha ? (
         <DateTimePicker
@@ -529,7 +683,7 @@ function EventosTab({perfilId}) {
       </TouchableOpacity>
       {editandoId ? (
         <TouchableOpacity style={[styles.btn, styles.btnSecondary]} onPress={limpiarFormulario}>
-          <Text style={styles.btnText}>Cancelar edición</Text>
+          <Text style={[styles.btnText, styles.btnSecondaryText]}>Cancelar edición</Text>
         </TouchableOpacity>
       ) : null}
 
@@ -545,10 +699,10 @@ function EventosTab({perfilId}) {
             <View style={{flex: 1}}>
               <Text style={styles.listCardTitle}>{e.nombre}</Text>
               {e.lugar ? (
-                <Text style={styles.listCardSub}>📍 {e.lugar}</Text>
+                <Text style={styles.listCardSub}>Lugar: {e.lugar}</Text>
               ) : null}
               <Text style={styles.listCardSub}>
-                🕐 {formatDate(e.fecha_inicio)}
+                Fecha: {formatDate(e.fecha_inicio)}
               </Text>
               <Text style={[styles.badge, {color: e.activo ? '#4ade80' : '#f87171'}]}>
                 {e.activo ? 'ACTIVO' : 'INACTIVO'}
@@ -563,7 +717,7 @@ function EventosTab({perfilId}) {
             <TouchableOpacity
               onPress={() => eliminarEvento(e.id)}
               style={styles.actionBtn}>
-              <Text style={{fontSize: 18}}>🗑️</Text>
+              <Text style={styles.actionText}>Eliminar</Text>
             </TouchableOpacity>
           </View>
         ))
@@ -575,11 +729,11 @@ function EventosTab({perfilId}) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#08111f',
+    backgroundColor: '#05080d',
   },
   centered: {
     flex: 1,
-    backgroundColor: '#08111f',
+    backgroundColor: '#05080d',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
@@ -588,21 +742,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 56,
     paddingBottom: 20,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#080d13',
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: '#25404a',
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
   },
   headerCopy: {
     flex: 1,
     paddingRight: 16,
   },
   eyebrow: {
-    color: '#2dd4bf',
+    color: '#ffad32',
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 1.3,
@@ -614,7 +771,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   headerSub: {
-    color: '#94a3b8',
+    color: '#91a2aa',
     fontSize: 14,
     marginTop: 2,
   },
@@ -624,10 +781,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 12,
-    borderRadius: 10,
+    borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#7f1d1d',
-    backgroundColor: 'rgba(127, 29, 29, 0.22)',
+    borderColor: 'rgba(255, 101, 113, 0.55)',
+    backgroundColor: 'rgba(255, 101, 113, 0.08)',
   },
   signOutText: {
     color: '#fecaca',
@@ -636,47 +793,51 @@ const styles = StyleSheet.create({
   },
   tabs: {
     flexDirection: 'row',
-    backgroundColor: '#0f172a',
+    backgroundColor: '#080d13',
     paddingHorizontal: 24,
     paddingBottom: 0,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: '#25404a',
+    justifyContent: 'center',
   },
   tab: {
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     marginRight: 8,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
   tabActive: {
-    borderBottomColor: '#2dd4bf',
+    borderBottomColor: '#ffad32',
   },
   tabText: {
-    color: '#64748b',
+    color: '#73848b',
     fontSize: 15,
     fontWeight: '600',
   },
   tabTextActive: {
-    color: '#2dd4bf',
+    color: '#45dce7',
   },
   tabContent: {
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
     paddingHorizontal: 24,
     paddingVertical: 24,
     paddingBottom: 60,
   },
   formTitle: {
-    color: '#67e8f9',
+    color: '#45dce7',
     fontSize: 15,
     fontWeight: '700',
     letterSpacing: 1,
     marginBottom: 12,
   },
   input: {
-    backgroundColor: 'rgba(30, 41, 59, 0.85)',
+    backgroundColor: '#0b141c',
     borderWidth: 1,
-    borderColor: '#334155',
-    borderRadius: 10,
+    borderColor: '#1a2a32',
+    borderRadius: 6,
     color: '#f8fafc',
     fontSize: 15,
     paddingHorizontal: 16,
@@ -684,7 +845,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   fieldLabel: {
-    color: '#94a3b8',
+    color: '#91a2aa',
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.8,
@@ -695,10 +856,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(30, 41, 59, 0.85)',
+    backgroundColor: '#0b141c',
     borderWidth: 1,
-    borderColor: '#334155',
-    borderRadius: 10,
+    borderColor: '#1a2a32',
+    borderRadius: 6,
     paddingHorizontal: 16,
     paddingVertical: 10,
     marginBottom: 10,
@@ -712,9 +873,61 @@ const styles = StyleSheet.create({
     color: '#64748b',
     fontWeight: '400',
   },
+  accessesIntro: {
+    color: '#91a2aa',
+    fontSize: 14,
+    lineHeight: 21,
+    marginBottom: 16,
+  },
+  accessCountCard: {
+    minHeight: 116,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#1a2a32',
+    backgroundColor: '#0b141c',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+    marginBottom: 14,
+  },
+  accessCountLabel: {
+    color: '#45dce7',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.4,
+    marginBottom: 7,
+  },
+  accessCount: {
+    color: '#edf5f7',
+    fontSize: 42,
+    fontWeight: '900',
+  },
+  deleteDayButton: {
+    minHeight: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 101, 113, 0.65)',
+    backgroundColor: 'rgba(255, 101, 113, 0.13)',
+  },
+  deleteDayButtonText: {
+    color: '#ffb6bd',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  deleteHint: {
+    color: '#73848b',
+    textAlign: 'center',
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 13,
+  },
   calendarIcon: {
-    color: '#2dd4bf',
-    fontSize: 22,
+    color: '#91a2aa',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
     marginLeft: 12,
   },
   tiposRow: {
@@ -725,7 +938,7 @@ const styles = StyleSheet.create({
   },
   tipoBtn: {
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: 5,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
@@ -734,42 +947,45 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   btn: {
-    borderRadius: 12,
+    borderRadius: 6,
     paddingVertical: 14,
     paddingHorizontal: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },
   btnPrimary: {
-    backgroundColor: '#0e7490',
+    backgroundColor: '#ffad32',
   },
   btnSecondary: {
-    backgroundColor: '#475569',
+    backgroundColor: '#17252c',
     marginTop: 10,
   },
   btnText: {
-    color: '#fff',
+    color: '#12100a',
     fontSize: 15,
     fontWeight: '700',
+  },
+  btnSecondaryText: {
+    color: '#d3e1e5',
   },
   listCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(30, 41, 59, 0.85)',
-    borderRadius: 12,
+    backgroundColor: '#0b141c',
+    borderRadius: 8,
     borderWidth: 1,
     paddingVertical: 12,
     paddingHorizontal: 16,
     marginBottom: 10,
   },
   listCardTitle: {
-    color: '#f8fafc',
+    color: '#edf5f7',
     fontSize: 15,
     fontWeight: '700',
     marginBottom: 4,
   },
   listCardSub: {
-    color: '#94a3b8',
+    color: '#91a2aa',
     fontSize: 13,
     marginBottom: 2,
   },
@@ -787,12 +1003,12 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   actionText: {
-    color: '#67e8f9',
+    color: '#45dce7',
     fontSize: 11,
     fontWeight: '700',
   },
   emptyText: {
-    color: '#475569',
+    color: '#73848b',
     fontSize: 15,
   },
   errorText: {

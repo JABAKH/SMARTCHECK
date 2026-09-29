@@ -81,7 +81,7 @@ export function suscribirAsistencias(callback) {
     .channel('asistencias-realtime')
     .on(
       'postgres_changes',
-      {event: 'INSERT', schema: 'public', table: 'asistencias'},
+      {event: '*', schema: 'public', table: 'asistencias'},
       payload => callback(payload),
     )
     .subscribe();
